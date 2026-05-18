@@ -24,3 +24,26 @@ This project analyzes insurance customer and claims data to identify risk patter
 ## Dashboard Preview
 
 ![Dashboard](images/Screenshot 2026-05-18 154208.png)
+
+
+## Machine Learning Model
+
+A Random Forest classification model was developed to predict whether a customer belongs to the high-risk category.
+
+### Target Variable
+- High Risk = 1
+- Not High Risk = 0
+
+### Model Features
+The model uses customer demographics, policy information, credit score, claim history, premium amount, deductible, and segmentation data.
+
+### Evaluation Metrics
+- Accuracy
+- ROC AUC
+- Precision
+- Recall
+- F1-score
+
+### Business Use Case
+The model can help insurance teams identify potentially high-risk customers and support pricing, underwriting, and segmentation decisions.
+
