@@ -3,6 +3,22 @@ import pandas as pd
 import plotly.express as px
 from pathlib import Path
 
+# -------------------------------
+# Professional dashboard styling
+# -------------------------------
+
+CUSTOM_COLORS = {
+    "Very Low": "#1F77B4",   # professional blue
+    "Low": "#2CA02C",        # green
+    "Medium": "#FFB000",     # amber
+    "High": "#D62728"        # red
+}
+
+CONTINUOUS_BLUE = "Blues"
+CONTINUOUS_TEAL = "Tealgrn"
+CONTINUOUS_ORANGE = "Oranges"
+PLOT_TEMPLATE = "plotly_white"
+
 # Page setup
 st.set_page_config(
     page_title="Insurance Risk Analytics Dashboard",
@@ -31,8 +47,8 @@ st.sidebar.header("Filters")
 
 policy_filter = st.sidebar.multiselect(
     "Select Policy Type",
-    options=df["policy_type"].unique(),
-    default=df["policy_type"].unique()
+    options=sorted(df["policy_type"].dropna().unique()),
+    default=sorted(df["policy_type"].dropna().unique())
 )
 
 risk_filter = st.sidebar.multiselect(
@@ -45,6 +61,11 @@ filtered_df = df[
     (df["policy_type"].isin(policy_filter)) &
     (df["risk_category"].isin(risk_filter))
 ]
+
+# Safety check
+if filtered_df.empty:
+    st.warning("No data available for the selected filters.")
+    st.stop()
 
 # KPI section
 st.subheader("Executive Overview")
@@ -59,7 +80,10 @@ col5.metric("Avg Credit Score", f"{filtered_df['credit_score'].mean():.0f}")
 
 st.divider()
 
+# -------------------------------
 # Risk analysis
+# -------------------------------
+
 st.subheader("Risk Analysis")
 
 col1, col2 = st.columns(2)
@@ -72,8 +96,15 @@ with col1:
         risk_count,
         x="risk_category",
         y="count",
-        title="Customer Count by Risk Category"
+        color="risk_category",
+        color_discrete_map=CUSTOM_COLORS,
+        title="Customer Count by Risk Category",
+        template=PLOT_TEMPLATE,
+        text="count"
     )
+
+    fig.update_layout(showlegend=False)
+    fig.update_traces(textposition="outside")
 
     st.plotly_chart(fig, use_container_width=True)
     fig.write_image(images_path / "risk_distribution.png")
@@ -83,13 +114,21 @@ with col2:
         filtered_df,
         x="risk_category",
         y="premium_amount",
-        title="Premium Amount by Risk Category"
+        color="risk_category",
+        color_discrete_map=CUSTOM_COLORS,
+        title="Premium Amount by Risk Category",
+        template=PLOT_TEMPLATE
     )
+
+    fig.update_layout(showlegend=False)
 
     st.plotly_chart(fig, use_container_width=True)
     fig.write_image(images_path / "premium_by_risk.png")
 
+# -------------------------------
 # Pricing analysis
+# -------------------------------
+
 st.subheader("Pricing Analysis")
 
 col1, col2 = st.columns(2)
@@ -106,7 +145,16 @@ with col1:
         x="policy_type",
         y="avg_premium",
         color="avg_risk",
-        title="Average Premium by Policy Type and Risk"
+        color_continuous_scale=CONTINUOUS_BLUE,
+        title="Average Premium by Policy Type and Risk",
+        template=PLOT_TEMPLATE,
+        text_auto=".0f"
+    )
+
+    fig.update_layout(
+        xaxis_title="Policy Type",
+        yaxis_title="Average Premium",
+        coloraxis_colorbar_title="Avg Risk"
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -120,16 +168,26 @@ with col2:
         x="coverage_amount",
         y="premium_amount",
         color="risk_category",
+        color_discrete_map=CUSTOM_COLORS,
         title="Coverage Amount vs Premium Amount",
-        opacity=0.3
+        opacity=0.45,
+        template=PLOT_TEMPLATE
     )
 
-    fig.update_traces(marker=dict(size=4))
+    fig.update_traces(marker=dict(size=5, line=dict(width=0.4, color="white")))
+    fig.update_layout(
+        xaxis_title="Coverage Amount",
+        yaxis_title="Premium Amount",
+        legend_title="Risk Category"
+    )
 
     st.plotly_chart(fig, use_container_width=True)
     fig.write_image(images_path / "coverage_vs_premium.png")
 
+# -------------------------------
 # Claims behavior
+# -------------------------------
+
 st.subheader("Claims Behavior")
 
 col1, col2 = st.columns(2)
@@ -143,7 +201,17 @@ with col1:
         claims_by_policy,
         x="policy_type",
         y="avg_claim_history",
-        title="Average Claim History by Policy Type"
+        color="avg_claim_history",
+        color_continuous_scale=CONTINUOUS_ORANGE,
+        title="Average Claim History by Policy Type",
+        template=PLOT_TEMPLATE,
+        text_auto=".2f"
+    )
+
+    fig.update_layout(
+        xaxis_title="Policy Type",
+        yaxis_title="Average Claim History",
+        coloraxis_colorbar_title="Avg Claims"
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -154,13 +222,21 @@ with col2:
         filtered_df,
         x="risk_category",
         y="claim_history",
-        title="Claim History by Risk Category"
+        color="risk_category",
+        color_discrete_map=CUSTOM_COLORS,
+        title="Claim History by Risk Category",
+        template=PLOT_TEMPLATE
     )
+
+    fig.update_layout(showlegend=False)
 
     st.plotly_chart(fig, use_container_width=True)
     fig.write_image(images_path / "claims_by_risk.png")
 
+# -------------------------------
 # Customer segmentation
+# -------------------------------
+
 st.subheader("Customer Segmentation")
 
 col1, col2 = st.columns(2)
@@ -177,8 +253,19 @@ with col1:
         x="segmentation_group",
         y="customers",
         color="avg_risk",
-        title="Customer Segments by Size and Risk"
+        color_continuous_scale=CONTINUOUS_TEAL,
+        title="Customer Segments by Size and Risk",
+        template=PLOT_TEMPLATE,
+        text="customers"
     )
+
+    fig.update_layout(
+        xaxis_title="Segmentation Group",
+        yaxis_title="Number of Customers",
+        coloraxis_colorbar_title="Avg Risk"
+    )
+
+    fig.update_traces(textposition="outside")
 
     st.plotly_chart(fig, use_container_width=True)
     fig.write_image(images_path / "customer_segments.png")
@@ -191,14 +278,26 @@ with col2:
         x="credit_score",
         y="claim_history",
         color="risk_category",
+        color_discrete_map=CUSTOM_COLORS,
         title="Credit Score vs Claim History",
-        opacity=0.6
+        opacity=0.55,
+        template=PLOT_TEMPLATE
+    )
+
+    fig.update_traces(marker=dict(size=5, line=dict(width=0.4, color="white")))
+    fig.update_layout(
+        xaxis_title="Credit Score",
+        yaxis_title="Claim History",
+        legend_title="Risk Category"
     )
 
     st.plotly_chart(fig, use_container_width=True)
     fig.write_image(images_path / "credit_vs_claims.png")
 
+# -------------------------------
 # Age analysis
+# -------------------------------
+
 st.subheader("Age and Risk Analysis")
 
 age_analysis = filtered_df.groupby("age_group", as_index=False).agg(
@@ -212,13 +311,26 @@ fig = px.line(
     x="age_group",
     y=["avg_premium", "avg_risk", "avg_claim_history"],
     markers=True,
-    title="Premium, Risk, and Claim History by Age Group"
+    title="Premium, Risk, and Claim History by Age Group",
+    template=PLOT_TEMPLATE,
+    color_discrete_sequence=["#1F77B4", "#D62728", "#FFB000"]
 )
+
+fig.update_layout(
+    xaxis_title="Age Group",
+    yaxis_title="Value",
+    legend_title="Metric"
+)
+
+fig.update_traces(line=dict(width=3), marker=dict(size=8))
 
 st.plotly_chart(fig, use_container_width=True)
 fig.write_image(images_path / "age_group_analysis.png")
 
+# -------------------------------
 # Business insights
+# -------------------------------
+
 st.subheader("Business Insights")
 
 highest_risk_policy = pricing.sort_values("avg_risk", ascending=False).iloc[0]
