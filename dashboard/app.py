@@ -16,6 +16,10 @@ csv_path = BASE_DIR / "data" / "processed" / "insurance_clean.csv"
 
 df = pd.read_csv(csv_path)
 
+# Create images folder for README chart exports
+images_path = BASE_DIR / "images"
+images_path.mkdir(exist_ok=True)
+
 st.title("Insurance Risk, Pricing & Customer Segmentation Dashboard")
 st.write(
     "This dashboard analyzes customer risk, pricing patterns, claim history, "
@@ -70,7 +74,9 @@ with col1:
         y="count",
         title="Customer Count by Risk Category"
     )
+
     st.plotly_chart(fig, use_container_width=True)
+    fig.write_image(images_path / "risk_distribution.png")
 
 with col2:
     fig = px.box(
@@ -79,7 +85,9 @@ with col2:
         y="premium_amount",
         title="Premium Amount by Risk Category"
     )
+
     st.plotly_chart(fig, use_container_width=True)
+    fig.write_image(images_path / "premium_by_risk.png")
 
 # Pricing analysis
 st.subheader("Pricing Analysis")
@@ -100,11 +108,15 @@ with col1:
         color="avg_risk",
         title="Average Premium by Policy Type and Risk"
     )
+
     st.plotly_chart(fig, use_container_width=True)
+    fig.write_image(images_path / "policy_risk_analysis.png")
 
 with col2:
+    sample_size = min(5000, len(filtered_df))
+
     fig = px.scatter(
-        filtered_df.sample(5000),  # sample data
+        filtered_df.sample(sample_size, random_state=42),
         x="coverage_amount",
         y="premium_amount",
         color="risk_category",
@@ -112,9 +124,10 @@ with col2:
         opacity=0.3
     )
 
-fig.update_traces(marker=dict(size=4))
+    fig.update_traces(marker=dict(size=4))
 
-st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True)
+    fig.write_image(images_path / "coverage_vs_premium.png")
 
 # Claims behavior
 st.subheader("Claims Behavior")
@@ -132,7 +145,9 @@ with col1:
         y="avg_claim_history",
         title="Average Claim History by Policy Type"
     )
+
     st.plotly_chart(fig, use_container_width=True)
+    fig.write_image(images_path / "claims_by_policy.png")
 
 with col2:
     fig = px.box(
@@ -141,7 +156,9 @@ with col2:
         y="claim_history",
         title="Claim History by Risk Category"
     )
+
     st.plotly_chart(fig, use_container_width=True)
+    fig.write_image(images_path / "claims_by_risk.png")
 
 # Customer segmentation
 st.subheader("Customer Segmentation")
@@ -162,18 +179,24 @@ with col1:
         color="avg_risk",
         title="Customer Segments by Size and Risk"
     )
+
     st.plotly_chart(fig, use_container_width=True)
+    fig.write_image(images_path / "customer_segments.png")
 
 with col2:
+    sample_size = min(5000, len(filtered_df))
+
     fig = px.scatter(
-        filtered_df,
+        filtered_df.sample(sample_size, random_state=42),
         x="credit_score",
         y="claim_history",
         color="risk_category",
         title="Credit Score vs Claim History",
         opacity=0.6
     )
+
     st.plotly_chart(fig, use_container_width=True)
+    fig.write_image(images_path / "credit_vs_claims.png")
 
 # Age analysis
 st.subheader("Age and Risk Analysis")
@@ -193,6 +216,7 @@ fig = px.line(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+fig.write_image(images_path / "age_group_analysis.png")
 
 # Business insights
 st.subheader("Business Insights")
